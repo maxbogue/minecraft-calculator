@@ -2,6 +2,17 @@ module MinecraftTools where
 
 import Data.List
 
+maybeJoin :: [Maybe a] -> [a]
+maybeJoin (Just x : xs) = x : maybeJoin xs
+maybeJoin (Nothing : xs) = maybeJoin xs
+maybeJoin [] = []
+
+data AnnotatedCost = CostNode String [AnnotatedCost] | CostLeaf String Int deriving Show
+
+getCost :: AnnotatedCost -> Int
+getCost (CostNode _ cs) = sum $ map getCost cs
+getCost (CostLeaf _ c) = c
+
 data ItemType = Pickaxe | Shovel | Axe | Sword | Helmet | Chestplate | Leggings | Boots | Bow | FishingRod deriving (Eq, Show)
 
 data EnchantmentCategory = ToolE | SwordE | ArmorE | BowE | FishingRodE deriving Eq
@@ -65,10 +76,10 @@ baseValue item = multipleEnchantPenalty (length $ enchantments item) + totalEnch
     enchantmentCost e = level e * costPerLevel e
     totalEnchantCost = sum $ map enchantmentCost $ enchantments item
 
-durabilityCost :: Item -> Item -> Int
+durabilityCost :: Item -> Item -> AnnotatedCost
 durabilityCost target sacrifice
-    | atMaxDurability target = 0
-    | otherwise = sacrificeCost sacrifice
+    | atMaxDurability target = CostLeaf "No durability cost." 0
+    | otherwise = CostLeaf "Durbility cost" $ sacrificeCost sacrifice
   where
     atMaxDurability :: Item -> Bool
     atMaxDurability i = durability i == maxDurability i
@@ -82,36 +93,43 @@ updateEnchant :: [Enchantment] -> Enchantment -> [Enchantment]
 updateEnchant (e:es) e' = if enchantmentT e == enchantmentT e' then (e' : es) else (e : updateEnchant es e')
 updateEnchant [] _ = []
 
-combineEnchantments :: Item -> Item -> (Int, [Enchantment])
-combineEnchantments target sacrifice = (enchantCost + newEnchantCost, finalEnchants) where
+combineEnchantments :: Item -> Item -> (AnnotatedCost, [Enchantment])
+combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     sacrificeEnchants = enchantments sacrifice
     targetEnchants = enchantments target
     combineEnchantments' (e:es) = if incompatibleEnchant
-        then (cost + level e, enchants)
+        then (CostLeaf (enchName ++ ": incompatible") (level e) : costs, enchants)
         else case find ((enchantmentT e ==) . enchantmentT) enchants of
             Just m -> case compare (level e) (level m) of
-                LT -> (cost, enchants)
+                LT -> (costs, enchants)
                 EQ -> if level e == maxLevel e
-                    then (cost + costPerLevel e, enchants)
-                    else (cost + costPerLevel e * 2, updateEnchant enchants (Enchantment (enchantmentT e) (level e + 1)))
-                GT -> (cost + (level e - level m) * costPerLevel e * 2, updateEnchant enchants e)
-            Nothing -> (cost + level e * costPerLevel e * 2, e : enchants)
+                    then (CostLeaf (enchName ++ ": max level") (costPerLevel e) : costs, enchants)
+                    else (CostLeaf (enchName ++ ": same level") (costPerLevel e * 2) : costs,
+                        updateEnchant enchants (Enchantment (enchantmentT e) (level e + 1)))
+                GT -> (CostLeaf (enchName ++ ": upgrade") ((level e - level m) * costPerLevel e * 2) : costs,
+                    updateEnchant enchants e)
+            Nothing -> (CostLeaf (enchName ++ ": new") (level e * costPerLevel e * 2) : costs, e : enchants)
       where
-        eT = enchantmentT e
-        (cost, enchants) = combineEnchantments' es
-        eTs = map enchantmentT enchants
-        incompatibleEnchant = any (exclusivityTag e ==) (map exclusivityTag es)
-    combineEnchantments' [] = (0, targetEnchants)
-    (enchantCost, finalEnchants) = combineEnchantments' sacrificeEnchants
+        enchName = show $ enchantmentT e
+        (costs, enchants) = combineEnchantments' es
+        incompatibleEnchant = any (exclusive e) enchants
+    combineEnchantments' [] = ([], targetEnchants)
+    (enchantCosts, finalEnchants) = combineEnchantments' sacrificeEnchants
     numFinalEnchants = length finalEnchants
     numNewEnchants = numFinalEnchants - length targetEnchants
-    newEnchantCost = if numNewEnchants == numFinalEnchants then 0 else numNewEnchants * (numFinalEnchants - 1) + 1
+    newEnchantCost = if numNewEnchants == 0 then 0 else numNewEnchants * (numFinalEnchants - 1) + 1
+    annotatedCost = CostNode "Enchantment cost" [CostNode "Base enchantment costs" enchantCosts, CostLeaf "New enchant penalty" newEnchantCost]
 
-combineItems :: Item -> Item -> (Int, [Enchantment])
-combineItems target sacrifice = (baseValue target +
-    priorWorkPenalty target + priorWorkPenalty sacrifice +
-    durabilityCost target sacrifice +
-    enchantCost, finalEnchants)
+combineItems :: Item -> Item -> (AnnotatedCost, [Enchantment])
+combineItems target sacrifice = (
+    CostNode "Total cost" [
+        CostLeaf "Base value" (baseValue target),
+        CostNode "Prior work penalty" [
+            CostLeaf "Target" (priorWorkPenalty target),
+            CostLeaf "Sacrifice" (priorWorkPenalty sacrifice)],
+        durabilityCost target sacrifice,
+        enchantCost],
+    finalEnchants)
   where
     (enchantCost, finalEnchants) = combineEnchantments target sacrifice
 
@@ -216,3 +234,12 @@ maxDurability' material itemType
         (Wood, Bow) -> 385
         (Wood, FishingRod) -> 1
         (x, y) -> error $ "Can't have a " ++ show y ++ " of material " ++ show x 
+
+exclusive :: Enchantment -> Enchantment -> Bool
+exclusive e1 e2 = case (exclusivityTag e1, exclusivityTag e2) of
+    (Just t1, Just t2) -> enchantmentT e1 /= enchantmentT e2
+    _ -> False
+
+i1 = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] 2
+i2 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] 2
+i3 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] 4
