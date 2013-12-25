@@ -2,12 +2,13 @@ module MinecraftTools where
 
 import Data.List
 
-maybeJoin :: [Maybe a] -> [a]
-maybeJoin (Just x : xs) = x : maybeJoin xs
-maybeJoin (Nothing : xs) = maybeJoin xs
-maybeJoin [] = []
+data AnnotatedCost = CostNode String [AnnotatedCost] | CostLeaf String Int
 
-data AnnotatedCost = CostNode String [AnnotatedCost] | CostLeaf String Int deriving Show
+instance Show AnnotatedCost where
+    show ac = show' "" ac where
+        show' prefix ac@(CostNode s subNodes) = prefix ++ s ++ ": " ++ (show $ getCost ac) ++ "\n" ++ showSubNodes where
+            showSubNodes = concatMap (show' $ "  " ++ prefix) subNodes
+        show' prefix (CostLeaf s i) = prefix ++ s ++ ": " ++ show i ++ "\n"
 
 getCost :: AnnotatedCost -> Int
 getCost (CostNode _ cs) = sum $ map getCost cs
@@ -32,10 +33,15 @@ data Item = Item {
     material :: Material,
     durability :: Int,
     enchantments :: [Enchantment],
-    priorWorkPenalty :: Int } deriving (Eq, Show)
+    nameOrNumJobs :: Either String Int } deriving (Eq, Show)
 
-makeItem :: ItemType -> Material -> [Enchantment] -> Int -> Item
-makeItem it m es pwp = Item it m (maxDurability' m it) es pwp
+priorWorkPenalty :: Item -> Int
+priorWorkPenalty i = case nameOrNumJobs i of
+    Left name -> 2
+    Right numJobs -> 2 * numJobs
+
+makeItem :: ItemType -> Material -> [Enchantment] -> Either String Int -> Item
+makeItem it m es nnj = Item it m (maxDurability' m it) es nnj
 
 data EnchantmentT =
     Protection |
@@ -71,15 +77,19 @@ validEnchantment :: Item -> Enchantment -> Bool
 validEnchantment item e = itemTypeIsIn (primaryItems e) || itemTypeIsIn (secondaryItems e) where
     itemTypeIsIn = elem $ itemType item
 
-baseValue :: Item -> Int
-baseValue item = multipleEnchantPenalty (length $ enchantments item) + totalEnchantCost where
-    enchantmentCost e = level e * costPerLevel e
-    totalEnchantCost = sum $ map enchantmentCost $ enchantments item
+baseValue :: Item -> AnnotatedCost
+baseValue item = CostNode "Target base value" [
+    enchantBaseCost,
+    CostLeaf "Multiple enchant penalty" mep]
+  where
+    mep = multipleEnchantPenalty (length $ enchantments item)
+    enchantmentCost e = CostLeaf ((show $ enchantmentT e) ++ " " ++ (show $ level e) ++ " x " ++ (show $ costPerLevel e)) $ level e * costPerLevel e
+    enchantBaseCost = CostNode "Enchantment base costs" $ map enchantmentCost $ enchantments item
 
 durabilityCost :: Item -> Item -> AnnotatedCost
 durabilityCost target sacrifice
-    | atMaxDurability target = CostLeaf "No durability cost." 0
-    | otherwise = CostLeaf "Durbility cost" $ sacrificeCost sacrifice
+    | atMaxDurability target = CostLeaf "Durability cost" 0
+    | otherwise = CostLeaf "Durability cost" $ sacrificeCost sacrifice
   where
     atMaxDurability :: Item -> Bool
     atMaxDurability i = durability i == maxDurability i
@@ -98,17 +108,17 @@ combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     sacrificeEnchants = enchantments sacrifice
     targetEnchants = enchantments target
     combineEnchantments' (e:es) = if incompatibleEnchant
-        then (CostLeaf (enchName ++ ": incompatible") (level e) : costs, enchants)
+        then (CostLeaf (enchName ++ ", incompatible") (level e) : costs, enchants)
         else case find ((enchantmentT e ==) . enchantmentT) enchants of
             Just m -> case compare (level e) (level m) of
                 LT -> (costs, enchants)
                 EQ -> if level e == maxLevel e
-                    then (CostLeaf (enchName ++ ": max level") (costPerLevel e) : costs, enchants)
-                    else (CostLeaf (enchName ++ ": same level") (costPerLevel e * 2) : costs,
+                    then (CostLeaf (enchName ++ ", max level") (costPerLevel e) : costs, enchants)
+                    else (CostLeaf (enchName ++ ", same level") (costPerLevel e * 2) : costs,
                         updateEnchant enchants (Enchantment (enchantmentT e) (level e + 1)))
-                GT -> (CostLeaf (enchName ++ ": upgrade") ((level e - level m) * costPerLevel e * 2) : costs,
+                GT -> (CostLeaf (enchName ++ ", upgrade") ((level e - level m) * costPerLevel e * 2) : costs,
                     updateEnchant enchants e)
-            Nothing -> (CostLeaf (enchName ++ ": new") (level e * costPerLevel e * 2) : costs, e : enchants)
+            Nothing -> (CostLeaf (enchName ++ ", new") (level e * costPerLevel e * 2) : costs, e : enchants)
       where
         enchName = show $ enchantmentT e
         (costs, enchants) = combineEnchantments' es
@@ -118,12 +128,12 @@ combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     numFinalEnchants = length finalEnchants
     numNewEnchants = numFinalEnchants - length targetEnchants
     newEnchantCost = if numNewEnchants == 0 then 0 else numNewEnchants * (numFinalEnchants - 1) + 1
-    annotatedCost = CostNode "Enchantment cost" [CostNode "Base enchantment costs" enchantCosts, CostLeaf "New enchant penalty" newEnchantCost]
+    annotatedCost = CostNode "Changed enchantment cost" [CostNode "Base enchantment costs" enchantCosts, CostLeaf "New enchant penalty" newEnchantCost]
 
 combineItems :: Item -> Item -> (AnnotatedCost, [Enchantment])
 combineItems target sacrifice = (
     CostNode "Total cost" [
-        CostLeaf "Base value" (baseValue target),
+        baseValue target,
         CostNode "Prior work penalty" [
             CostLeaf "Target" (priorWorkPenalty target),
             CostLeaf "Sacrifice" (priorWorkPenalty sacrifice)],
@@ -240,6 +250,6 @@ exclusive e1 e2 = case (exclusivityTag e1, exclusivityTag e2) of
     (Just t1, Just t2) -> enchantmentT e1 /= enchantmentT e2
     _ -> False
 
-i1 = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] 2
-i2 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] 2
-i3 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] 4
+lucky = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Lucky")
+pointy = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] (Left "Pointy")
+i1 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] (Right 2)
