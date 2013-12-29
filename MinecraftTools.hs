@@ -1,14 +1,25 @@
 module MinecraftTools where
 
-import Data.List
+import Prelude
+
+-- My own implementation of find so that this is Fay and GHCi compatible.
+find' p (e:es) = if p e then Just e else find' p es
+find' p [] = Nothing
+
+join :: String -> [String] -> String
+join sep [] =  ""
+join sep [s] = s
+join sep (s:ss) = s ++ sep ++ join sep ss
 
 data AnnotatedCost = CostNode String [AnnotatedCost] | CostLeaf String Int
 
-instance Show AnnotatedCost where
-    show ac = show' "" ac where
-        show' prefix ac@(CostNode s subNodes) = prefix ++ s ++ ": " ++ (show $ getCost ac) ++ "\n" ++ showSubNodes where
-            showSubNodes = concatMap (show' $ "  " ++ prefix) subNodes
-        show' prefix (CostLeaf s i) = prefix ++ s ++ ": " ++ show i ++ "\n"
+showCost :: AnnotatedCost -> String
+showCost ac = showCost' "" ac where
+    showCost' prefix ac@(CostNode s subNodes) =
+        prefix ++ s ++ ": " ++ (show $ getCost ac) ++ "\n" ++ showCostSubNodes
+      where
+        showCostSubNodes = concatMap (showCost' $ "  " ++ prefix) subNodes
+    showCost' prefix (CostLeaf s i) = prefix ++ s ++ ": " ++ show i ++ "\n"
 
 getCost :: AnnotatedCost -> Int
 getCost (CostNode _ cs) = sum $ map getCost cs
@@ -16,9 +27,29 @@ getCost (CostLeaf _ c) = c
 
 data ItemType = Pickaxe | Shovel | Axe | Sword | Helmet | Chestplate | Leggings | Boots | Bow | FishingRod deriving (Eq, Show)
 
+showItemType itemType = case itemType of
+    Pickaxe -> "Pickaxe"
+    Shovel -> "Shovel"
+    Axe -> "Axe"
+    Sword -> "Sword"
+    Helmet -> "Helmet"
+    Chestplate -> "Chestplate"
+    Leggings -> "Leggings"
+    Boots -> "Boots"
+    Bow -> "Bow"
+    FishingRod -> "Fishing Rod"
+
 data EnchantmentCategory = ToolE | SwordE | ArmorE | BowE | FishingRodE deriving Eq
 
 data Material = Wood | Leather | Stone | Chain | Iron | Gold | Diamond deriving (Eq, Show)
+
+showMaterial Wood = "Wood"
+showMaterial Leather = "Leather"
+showMaterial Stone = "Stone"
+showMaterial Chain = "Chain"
+showMaterial Iron = "Iron"
+showMaterial Gold = "Gold"
+showMaterial Diamond = "Diamond"
 
 validMaterials :: ItemType -> [Material]
 validMaterials itemType = case enchantmentCategory itemType of
@@ -33,7 +64,16 @@ data Item = Item {
     material :: Material,
     durability :: Int,
     enchantments :: [Enchantment],
-    nameOrNumJobs :: Either String Int } deriving (Eq, Show)
+    nameOrNumJobs :: Either String Int }
+
+showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es'
+  where
+    matType = (showMaterial mat) ++ " " ++ (showItemType iT)
+    nnj' = case nnj of
+        Left name -> " \"" ++ name ++ "\""
+        Right numJobs -> " (" ++ show numJobs ++ " jobs)"
+    dur' = " " ++ show dur ++ "/" ++ (show $ maxDurability i)
+    es' = " " ++ join ", " (map showEnchantment es)
 
 priorWorkPenalty :: Item -> Int
 priorWorkPenalty i = case nameOrNumJobs i of
@@ -68,10 +108,38 @@ data EnchantmentT =
     Infinity |
     LuckOfTheSea |
     Lure deriving (Eq, Show)
-    
+
+showEnchantmentT e = case e of
+    Protection -> "Protection"
+    FireProtection -> "Fire Protection"
+    FeatherFalling -> "Feather Falling"
+    BlastProtection -> "Blast Protection"
+    ProjectileProtection -> "Projectile Protection"
+    Respiration -> "Respiration"
+    AquaAffinity -> "Aqua Affinity"
+    Thorns -> "Thorns"
+    Sharpness -> "Sharpness"
+    Smite -> "Smite"
+    BaneOfArthropods -> "Bane Of Arthropods"
+    Knockback -> "Knockback"
+    FireAspect -> "Fire Aspect"
+    Looting -> "Looting"
+    Efficiency -> "Efficiency"
+    SilkTouch -> "Silk Touch"
+    Unbreaking -> "Unbreaking"
+    Fortune -> "Fortune"
+    Power -> "Power"
+    Punch -> "Punch"
+    Flame -> "Flame"
+    Infinity -> "Infinity"
+    LuckOfTheSea -> "Luck Of The Sea"
+    Lure -> "Lure"
+
 data Enchantment = Enchantment {
     enchantmentT :: EnchantmentT,
     level :: Int } deriving (Eq, Show)
+
+showEnchantment (Enchantment eT level) = showEnchantmentT eT ++ " " ++ show level
 
 validEnchantment :: Item -> Enchantment -> Bool
 validEnchantment item e = itemTypeIsIn (primaryItems e) || itemTypeIsIn (secondaryItems e) where
@@ -109,7 +177,7 @@ combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     targetEnchants = enchantments target
     combineEnchantments' (e:es) = if incompatibleEnchant
         then (CostLeaf (enchName ++ ", incompatible") (level e) : costs, enchants)
-        else case find ((enchantmentT e ==) . enchantmentT) enchants of
+        else case find' ((enchantmentT e ==) . enchantmentT) enchants of
             Just m -> case compare (level e) (level m) of
                 LT -> (costs, enchants)
                 EQ -> if level e == maxLevel e
@@ -250,6 +318,6 @@ exclusive e1 e2 = case (exclusivityTag e1, exclusivityTag e2) of
     (Just t1, Just t2) -> enchantmentT e1 /= enchantmentT e2
     _ -> False
 
-lucky = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Lucky")
+pixie = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Pixie")
 pointy = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] (Left "Pointy")
 i1 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] (Right 2)
