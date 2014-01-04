@@ -1,10 +1,12 @@
 module AnvilData where
 
-data ItemType = Pickaxe | Shovel | Axe | Sword | Helmet | Chestplate | Leggings | Boots | Bow | FishingRod deriving (Eq, Show)
+import Prelude
+
+data ItemType = Pickaxe | Shovel | Axe | Sword | Helmet | Chestplate | Leggings | Boots | Bow | FishingRod deriving (Eq, Read, Show)
 
 data EnchantmentCategory = ToolE | SwordE | ArmorE | BowE | FishingRodE deriving Eq
 
-data Material = Wood | Leather | Stone | Chain | Iron | Gold | Diamond deriving (Eq, Show)
+data Material = Wood | Leather | Stone | Chain | Iron | Gold | Diamond deriving (Eq, Read, Show)
 
 data Item = Item {
     itemType :: ItemType,
@@ -37,7 +39,7 @@ data EnchantmentT =
     Flame |
     Infinity |
     LuckOfTheSea |
-    Lure deriving (Eq, Show)
+    Lure deriving (Eq, Read, Show)
 
 data Enchantment = Enchantment {
     enchantmentT :: EnchantmentT,

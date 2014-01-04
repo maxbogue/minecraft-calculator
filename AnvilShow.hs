@@ -1,5 +1,6 @@
 module AnvilShow where
 
+import Prelude
 import AnvilData
 
 join :: String -> [String] -> String

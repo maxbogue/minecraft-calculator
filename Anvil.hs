@@ -27,7 +27,7 @@ baseValue item = CostNode "Target base value" [
     CostLeaf "Multiple enchant penalty" mep]
   where
     mep = multipleEnchantPenalty (length $ enchantments item)
-    enchantmentCost e = CostLeaf ((show $ enchantmentT e) ++ " " ++ (show $ level e) ++ " x " ++ (show $ costPerLevel e)) $ level e * costPerLevel e
+    enchantmentCost e = CostLeaf ((showEnchantment e) ++ " " ++ (show $ level e) ++ " x " ++ (show $ costPerLevel e)) $ level e * costPerLevel e
     enchantBaseCost = CostNode "Enchantment base costs" $ map enchantmentCost $ enchantments item
 
 durabilityCost :: Item -> Item -> AnnotatedCost
@@ -47,6 +47,9 @@ updateEnchant :: [Enchantment] -> Enchantment -> [Enchantment]
 updateEnchant (e:es) e' = if enchantmentT e == enchantmentT e' then (e' : es) else (e : updateEnchant es e')
 updateEnchant [] _ = []
 
+updateEnchantments :: Item -> [Enchantment] -> Item
+updateEnchantments (Item it mat dur es nnj) es' = Item it mat dur es' nnj
+
 combineEnchantments :: Item -> Item -> (AnnotatedCost, [Enchantment])
 combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     sacrificeEnchants = enchantments sacrifice
@@ -64,7 +67,7 @@ combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
                     updateEnchant enchants e)
             Nothing -> (CostLeaf (enchName ++ ", new") (level e * costPerLevel e * 2) : costs, e : enchants)
       where
-        enchName = show $ enchantmentT e
+        enchName = showEnchantment e
         (costs, enchants) = combineEnchantments' es
         incompatibleEnchant = any (exclusive e) enchants
     combineEnchantments' [] = ([], targetEnchants)
@@ -74,7 +77,7 @@ combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
     newEnchantCost = if numNewEnchants == 0 then 0 else numNewEnchants * (numFinalEnchants - 1) + 1
     annotatedCost = CostNode "Changed enchantment cost" [CostNode "Base enchantment costs" enchantCosts, CostLeaf "New enchant penalty" newEnchantCost]
 
-combineItems :: Item -> Item -> (AnnotatedCost, [Enchantment])
+combineItems :: Item -> Item -> (AnnotatedCost, Item)
 combineItems target sacrifice = (
     CostNode "Total cost" [
         baseValue target,
@@ -83,10 +86,13 @@ combineItems target sacrifice = (
             CostLeaf "Sacrifice" (priorWorkPenalty sacrifice)],
         durabilityCost target sacrifice,
         enchantCost],
-    finalEnchants)
+    updateEnchantments target finalEnchants)
   where
     (enchantCost, finalEnchants) = combineEnchantments target sacrifice
 
 pixie = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Pixie")
 pointy = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] (Left "Pointy")
 i1 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] (Right 2)
+
+bam = Item Sword Diamond 1 [Enchantment Unbreaking 3, Enchantment Sharpness 3, Enchantment FireAspect 2, Enchantment Looting 2] (Right 0)
+plainSword = makeItem Sword Diamond [] (Right 0)
