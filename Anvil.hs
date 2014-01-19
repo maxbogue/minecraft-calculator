@@ -27,7 +27,7 @@ baseValue item = CostNode "Target base value" [
     CostLeaf "Multiple enchant penalty" mep]
   where
     mep = multipleEnchantPenalty (length $ enchantments item)
-    enchantmentCost e = CostLeaf ((showEnchantment e) ++ " " ++ (show $ level e) ++ " x " ++ (show $ costPerLevel e)) $ level e * costPerLevel e
+    enchantmentCost e = CostLeaf ((showEnchantment e) ++ " x " ++ (show $ costPerLevel e)) $ level e * costPerLevel e
     enchantBaseCost = CostNode "Enchantment base costs" $ map enchantmentCost $ enchantments item
 
 durabilityCost :: Item -> Item -> AnnotatedCost
@@ -46,9 +46,6 @@ durabilityCost target sacrifice
 updateEnchant :: [Enchantment] -> Enchantment -> [Enchantment]
 updateEnchant (e:es) e' = if enchantmentT e == enchantmentT e' then (e' : es) else (e : updateEnchant es e')
 updateEnchant [] _ = []
-
-updateEnchantments :: Item -> [Enchantment] -> Item
-updateEnchantments (Item it mat dur es nnj) es' = Item it mat dur es' nnj
 
 combineEnchantments :: Item -> Item -> (AnnotatedCost, [Enchantment])
 combineEnchantments target sacrifice = (annotatedCost, finalEnchants) where
@@ -86,13 +83,45 @@ combineItems target sacrifice = (
             CostLeaf "Sacrifice" (priorWorkPenalty sacrifice)],
         durabilityCost target sacrifice,
         enchantCost],
-    updateEnchantments target finalEnchants)
+    target { enchantments = finalEnchants })
   where
     (enchantCost, finalEnchants) = combineEnchantments target sacrifice
+
+unitRepair :: Item -> Int -> (AnnotatedCost, Item)
+unitRepair i@(Item _ mat dur es _) n' = (
+    CostNode "Total cost" [
+        baseValue i,
+        CostLeaf "Prior work penalty" (priorWorkPenalty i),
+        CostLeaf "Unit cost" unitCost],
+    i { durability = finalDurability })
+  where
+    unitCost = if mat == Diamond then diamondRepair dur n' else unitRepair' dur n'
+    finalDurability = min maxDur (dur + unitDur * n')
+    maxDur = maxDurability i
+    unitDur = maxDur `div` 4
+    unitRepair' d 0 = 0
+    unitRepair' d n = 1 + length es + unitRepair' (d + unitDur) (n - 1)
+    diamondRepair d 0 = 0
+    diamondRepair d n = length es + dCost (maxDur - d) + diamondRepair (d + unitDur) (n - 1) where
+        dCost toMax
+            | toMax < 200 = 1
+            | toMax < 300 = 2
+            | otherwise = 3
 
 pixie = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Pixie")
 pointy = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] (Left "Pointy")
 i1 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] (Right 2)
+zeacquirer = makeItem Sword Diamond [Enchantment Looting 3, Enchantment Sharpness 4] (Left "Ze Acquirerer")
+unbreakingSword = makeItem Sword Diamond [Enchantment Unbreaking 3] (Right 0)
 
 bam = Item Sword Diamond 1 [Enchantment Unbreaking 3, Enchantment Sharpness 3, Enchantment FireAspect 2, Enchantment Looting 2] (Right 0)
+plunder = makeItem Sword Diamond [Enchantment Looting 3, Enchantment Sharpness 4] (Left "Plunder")
+smiteUnbreaking = makeItem Sword Diamond [Enchantment Smite 4, Enchantment Unbreaking 3] (Right 0)
 plainSword = makeItem Sword Diamond [] (Right 0)
+
+myriad = Item Bow Wood 1 [Enchantment Infinity 1, Enchantment Power 4, Enchantment Punch 2, Enchantment Unbreaking 1] (Left "Myriad")
+plainBow = makeItem Bow Wood [] (Right 0)
+
+thornsChest = Item Chestplate Diamond 1 [Enchantment BlastProtection 4, Enchantment Thorns 2, Enchantment Unbreaking 3] (Right 0)
+prot1Chest = makeItem Chestplate Diamond [Enchantment Protection 1] (Right 0)
+plainChest = makeItem Chestplate Diamond [] (Right 0)

@@ -49,7 +49,7 @@ showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es'
         Left name -> " \"" ++ name ++ "\""
         Right numJobs -> " (" ++ show numJobs ++ " jobs)"
     dur' = " " ++ show dur ++ "/" ++ (show $ maxDurability i)
-    es' = " " ++ join ", " (map showEnchantment es)
+    es' = (if null es then "" else " ") ++ join ", " (map showEnchantment es)
 
 showEnchantmentT e = case e of
     Protection -> "Protection"
