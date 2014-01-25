@@ -1,6 +1,6 @@
 import Prelude
 
-import DOM
+import DOM hiding (setValue, getValue)
 import FFI
 
 import Anvil
@@ -22,34 +22,55 @@ getEventMouseButton = ffi "%1.button"
 getEventElement :: Event -> Fay Element
 getEventElement = ffi "%1.target"
 
-getItemTypeElements :: Fay [Element]
-getItemTypeElements = ffi "document.querySelectorAll('#editor input[name=itemType]')"
+querySelector :: String -> Fay Element
+querySelector = ffi "document.querySelector(%1)"
 
+querySelectorAll :: String -> Fay [Element]
+querySelectorAll = ffi "document.querySelectorAll(%1)"
+
+bindSelectableEventListener :: Element -> [Element] -> Fay ()
+bindSelectableEventListener e es = do
+    addEventListener "click" (\ev -> do
+        forM_ es $ \e' -> removeClass e' "selected"
+        addClass e "selected"
+        return True) e
 
 initItemTypeElements :: Fay ()
 initItemTypeElements = do
-    elements <- getItemTypeElements
-    print elements
+    elements <- querySelectorAll "#editor .itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
-        setItemTypeValue element itemType
-        setTextAfter element (showItemType itemType)
+        setValue element itemType
+        setText element (showItemType itemType)
+        bindSelectableEventListener element elements
   where
-    itemTypes = [Sword, Pickaxe, Shovel, Axe, Helmet, Chestplate, Leggings, Boots, Bow, FishingRod]
+    itemTypes = [Sword, Helmet, Pickaxe, Chestplate, Shovel, Leggings, Axe, Boots, Bow, FishingRod]
 
-setTextAfter :: Element -> String -> Fay ()
-setTextAfter e s = do
-    p <- parentNode e
-    createTextNode s >>= appendChild p
+initMaterialElements :: Fay ()
+initMaterialElements = do
+    elements <- querySelectorAll "#editor .material"
+    forM_ (zip elements materials) $ \(element, material) -> do
+        setValue element material
+        setText element (showMaterial material)
+        bindSelectableEventListener element elements
+  where
+    materials = [Diamond, Iron, Gold, Chain, Leather, Stone, Wood]
 
-setItemTypeValue :: Element -> ItemType -> Fay ()
-setItemTypeValue = ffi "%1.value = %2"
+setText :: Element -> String -> Fay ()
+setText = ffi "%1.innerText = %2"
+
+getValue :: Element -> Fay a
+getValue = ffi "%1.value"
+
+setValue :: Element -> a -> Fay ()
+setValue = ffi "%1.value = %2"
 
 initEditor :: Fay ()
 initEditor = do
     initItemTypeElements
+    initMaterialElements
 
 editorItemType :: Fay ItemType
-editorItemType = ffi "document.querySelector('input[name=itemType]:checked').value"
+editorItemType = querySelector ".itemType.selected" >>= getValue
 
 setBackgroundBlack :: Element -> Fay ()
 setBackgroundBlack = ffi "%1.style.backgroundColor = '#000'"
@@ -66,14 +87,12 @@ setItem = ffi "%1.dataset.item = %2"
 getItem :: Element -> Fay (Maybe Item)
 getItem = ffi "%1.dataset.item"
 
-data Test = Test
-
 main :: Fay ()
 main = do
   initEditor
-  print Test
   slots <- getElementsByClass "slot"
   forM_ slots $ addEventListener "mousedown" slotClick
-  maybeItemType <- editorItemType
-  print maybeItemType
+  iT <- editorItemType
+  print iT
+  print $ showItemType iT
   {-putStrLn $ showItemType maybeItemType-}

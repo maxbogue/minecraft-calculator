@@ -1,7 +1,12 @@
-ul {
-  list-style: none;
+body {
+  font-family: Arial;
+}
+div, span, ul, li {
   margin: 0;
   padding: 0;
+}
+ul {
+  list-style: none;
 }
 
 #center {
@@ -25,4 +30,21 @@ ul {
 }
 #inventory .slot:hover {
   
+}
+#itemTypes {
+  width: 80px;
+}
+.itemType {
+  background-color: red;
+  font-size: 10px;
+  height: 40px;
+  overflow: hidden;
+  text-align: center;
+  width: 40px;
+}
+.itemType.selected {
+  background-color: green;
+}
+.material.selected {
+  background-color: purple;
 }

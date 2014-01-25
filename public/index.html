@@ -8,22 +8,37 @@
   <body>
     <div id=center>
       <div id=editor>
-        <form>
-          <table>
-            <tr>
-              <td><input type=radio name=itemType checked></td>
-              <td><input type=radio name=itemType></td>
-            </tr>
-            <tr>
-              <td><input type=radio name=itemType></td>
-              <td><input type=radio name=itemType></td>
-            </tr>
-            <tr>
-              <td><input type=radio name=itemType></td>
-              <td><input type=radio name=itemType></td>
-            </tr>
-          </table>
-        </form>
+        <table id=itemTypes>
+          <tr>
+            <td class="itemType selected"></td>
+            <td class=itemType></td>
+          </tr>
+          <tr>
+            <td class=itemType></td>
+            <td class=itemType></td>
+          </tr>
+          <tr>
+            <td class=itemType></td>
+            <td class=itemType></td>
+          </tr>
+          <tr>
+            <td class=itemType></td>
+            <td class=itemType></td>
+          </tr>
+          <tr>
+            <td class=itemType></td>
+            <td class=itemType></td>
+          </tr>
+        </table>
+        <table id=materials>
+          <tr><td class="material selected"></td></tr>
+          <tr><td class=material></td></tr>
+          <tr><td class=material></td></tr>
+          <tr><td class=material></td></tr>
+          <tr><td class=material></td></tr>
+          <tr><td class=material></td></tr>
+          <tr><td class=material></td></tr>
+        </table>
       </div>
       <div id=anvil>Anvil</div>
       <ul id=inventory>
