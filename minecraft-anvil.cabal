@@ -1,0 +1,25 @@
+name:                minecraft-anvil
+version:             0.0.1.0
+synopsis:            A Minecraft anvil calculator.
+license:             MIT
+license-file:        LICENSE
+author:              Max Bogue
+maintainer:          elnaril@gmail.com
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  -- Modules exported by the library.
+  exposed-modules:     Anvil,
+                       Anvil.Data,
+                       Anvil.Show
+  
+  -- Modules included in this library but not exported.
+  -- other-modules:       
+  
+  -- Other library packages from which modules are imported.
+  build-depends:       base ==4.5.*  
+  -- Directories containing source files.
+  hs-source-dirs:      src
+  

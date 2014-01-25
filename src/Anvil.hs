@@ -2,8 +2,8 @@ module Anvil where
 
 import Prelude
 
-import AnvilData
-import AnvilShow
+import Anvil.Data
+import Anvil.Show
 
 -- My own implementation of find so that this is Fay and GHCi compatible.
 find' p (e:es) = if p e then Just e else find' p es

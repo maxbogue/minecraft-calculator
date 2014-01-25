@@ -1,7 +1,7 @@
-module AnvilShow where
+module Anvil.Show where
 
 import Prelude
-import AnvilData
+import Anvil.Data
 
 join :: String -> [String] -> String
 join sep [] =  ""

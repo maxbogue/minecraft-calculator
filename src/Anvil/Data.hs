@@ -1,4 +1,4 @@
-module AnvilData where
+module Anvil.Data where
 
 import Prelude
 

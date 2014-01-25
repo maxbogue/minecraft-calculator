@@ -1,23 +1,17 @@
 import Prelude
 
+import DOM
 import FFI
 
 import Anvil
-import AnvilData
-import AnvilShow
-
-data Element
-
-getElementById :: String -> Fay Element
-getElementById = ffi "document.getElementById(%1)"
+import Anvil.Data
+import Anvil.Show
 
 getElementsByClass :: String -> Fay [Element]
 getElementsByClass = ffi "document.getElementsByClassName(%1)"
 
 focusElement :: Element -> Fay ()
 focusElement = ffi "%1.focus()"
-
-data Event
 
 addEventListener :: String -> (Event -> Fay Bool) -> Element -> Fay ()
 addEventListener = ffi "%3.addEventListener(%1,%2,false)"
@@ -38,12 +32,14 @@ initItemTypeElements = do
     print elements
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
         setItemTypeValue element itemType
-        setText element (showItemType itemType)
+        setTextAfter element (showItemType itemType)
   where
-    itemTypes = [Sword, Pickaxe, Shovel, Axe]
+    itemTypes = [Sword, Pickaxe, Shovel, Axe, Helmet, Chestplate, Leggings, Boots, Bow, FishingRod]
 
-setText :: Element -> String -> Fay ()
-setText = ffi "%1.parentNode.appendChild(document.createTextNode(%2))"
+setTextAfter :: Element -> String -> Fay ()
+setTextAfter e s = do
+    p <- parentNode e
+    createTextNode s >>= appendChild p
 
 setItemTypeValue :: Element -> ItemType -> Fay ()
 setItemTypeValue = ffi "%1.value = %2"
