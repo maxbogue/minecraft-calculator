@@ -42,7 +42,7 @@ showMaterial Iron = "Iron"
 showMaterial Gold = "Gold"
 showMaterial Diamond = "Diamond"
 
-showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es'
+showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es' ++ "]"
   where
     matType = (showMaterial mat) ++ " " ++ (showItemType iT)
     nnj' = case nnj of
