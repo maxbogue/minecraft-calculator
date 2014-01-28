@@ -19,6 +19,9 @@ ul {
   float: right;
   margin: 50px;
 }
+#editor {
+    background-color: #EEE;
+}
 #inventory {
   margin-right: 50px;
   width: 200px;
@@ -31,19 +34,24 @@ ul {
 #inventory .slot:hover {
   
 }
-#itemTypes {
-  width: 80px;
+.itemTypes, .materials {
+  display: inline-block;
 }
-.itemType {
-  background-color: red;
-  font-size: 10px;
-  height: 40px;
+.itemType, .material {
+  background-color: #EEE;
+  border: 1px solid #000;
+  color: #333;
+  font-size: 8px;
+  height: 8px;
+  line-height: 1;
+  margin: 0 2px 2px 0;
   overflow: hidden;
+  padding: 11px 0;
   text-align: center;
-  width: 40px;
+  width: 30px;
 }
 .itemType.selected {
-  background-color: green;
+  border-color: green;
 }
 .material.selected {
   background-color: purple;

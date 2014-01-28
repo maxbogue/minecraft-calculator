@@ -7,7 +7,7 @@ module Anvil.UI.Editor (
 
 import Prelude
 
-import DOM hiding (getValue, setValue)
+import DOM
 import FFI
 
 import Anvil
@@ -29,33 +29,52 @@ import Anvil.UI.Base
 
 initEditor :: Fay ()
 initEditor = do
-    initItemTypeElements
+    editor <- getElementById "editor"
     initMaterialElements
+    initItemTypeElements
+    showBlock editor
 
 initItemTypeElements :: Fay ()
 initItemTypeElements = do
     elements <- querySelectorAll "#editor .itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
-        setValue element itemType
-        setText element (showItemType itemType)
+        selected <- hasClass element "selected"
+        when selected $ filterMaterials itemType
+        setAnvilValue element itemType
+        setText element (showShortItemType itemType)
         bindSelectableEventListener element elements
+        addEventListener "click" itemTypeClicked element
   where
-    itemTypes = [Sword, Helmet, Pickaxe, Chestplate, Shovel, Leggings, Axe, Boots, Bow, FishingRod]
+    itemTypes = [Sword, Pickaxe, Shovel, Axe, Bow, Helmet, Chestplate, Leggings, Boots, FishingRod]
 
 initMaterialElements :: Fay ()
 initMaterialElements = do
     elements <- querySelectorAll "#editor .material"
     forM_ (zip elements materials) $ \(element, material) -> do
-        setValue element material
-        setText element (showMaterial material)
+        setAnvilValue element material
+        setText element (showShortMaterial material)
         bindSelectableEventListener element elements
   where
     materials = [Diamond, Iron, Gold, Chain, Leather, Stone, Wood]
 
 editorItem :: Fay Item
 editorItem = do
-    itemType <- querySelector ".itemType.selected" >>= getValue
-    material <- querySelector ".material.selected" >>= getValue
+    itemType <- querySelector ".itemType.selected" >>= getAnvilValue
+    material <- querySelector ".material.selected" >>= getAnvilValue
     name <- querySelector "#name" >>= getStringValue
     let nnj = if name == "" then Right 0 else Left name
     return $ makeItem itemType material [] nnj
+
+itemTypeClicked :: Event -> Fay Bool
+itemTypeClicked ev = do
+    getEventElement ev >>= getAnvilValue >>= filterMaterials
+    return True
+
+filterMaterials :: ItemType -> Fay ()
+filterMaterials itemType = do
+    let vMats = validMaterials itemType
+    matElements <- querySelectorAll "#editor .material"
+    forM_ matElements $ \matElem -> do
+        mat <- getAnvilValue matElem
+        if mat `elem` vMats then showBlock matElem else hideElement matElem
+

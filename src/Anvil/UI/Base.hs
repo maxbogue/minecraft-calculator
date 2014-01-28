@@ -39,11 +39,17 @@ bindSelectableEventListener e es = do
 setText :: Element -> String -> Fay ()
 setText = ffi "%1.innerText = %2"
 
-getValue :: Element -> Fay a
-getValue = ffi "%1.value"
+getAnvilValue :: Element -> Fay a
+getAnvilValue = ffi "%1.anvilValue"
 
-setValue :: Element -> a -> Fay ()
-setValue = ffi "%1.value = %2"
+setAnvilValue :: Element -> a -> Fay ()
+setAnvilValue = ffi "%1.anvilValue = %2"
 
 getStringValue :: Element -> Fay String
 getStringValue = ffi "%1.value"
+
+hideElement :: Element -> Fay ()
+hideElement = ffi "%1.style.display = 'none'"
+
+showBlock :: Element -> Fay ()
+showBlock = ffi "%1.style.display = 'block'"

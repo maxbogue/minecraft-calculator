@@ -34,6 +34,18 @@ showItemType itemType = case itemType of
     Bow -> "Bow"
     FishingRod -> "Fishing Rod"
 
+showShortItemType itemType = case itemType of
+    Pickaxe -> "Pickaxe"
+    Shovel -> "Shovel"
+    Axe -> "Axe"
+    Sword -> "Sword"
+    Helmet -> "Helmet"
+    Chestplate -> "Chest"
+    Leggings -> "Legs"
+    Boots -> "Boots"
+    Bow -> "Bow"
+    FishingRod -> "Fish"
+
 showMaterial Wood = "Wood"
 showMaterial Leather = "Leather"
 showMaterial Stone = "Stone"
@@ -41,6 +53,8 @@ showMaterial Chain = "Chain"
 showMaterial Iron = "Iron"
 showMaterial Gold = "Gold"
 showMaterial Diamond = "Diamond"
+
+showShortMaterial = take 5 . showMaterial
 
 showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es' ++ "]"
   where
