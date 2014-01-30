@@ -18,8 +18,14 @@ querySelectorAll = ffi "document.querySelectorAll(%1)"
 
 -- Events
 
-addEventListener :: String -> (Event -> Fay Bool) -> Element -> Fay ()
-addEventListener = ffi "%3.addEventListener(%1,%2,false)"
+addEventListener :: String -> Element -> (Event -> Fay Bool) -> Fay ()
+addEventListener = ffi "%2.addEventListener(%1,%3,false)"
+
+onClick :: Element -> (Event -> Fay Bool) -> Fay ()
+onClick = addEventListener "click"
+
+eventWrapper :: Fay a -> Event -> Fay Bool
+eventWrapper f ev = f >> return True
 
 getEventMouseButton :: Event -> Fay Int
 getEventMouseButton = ffi "%1.button"
@@ -29,10 +35,10 @@ getEventElement = ffi "%1.target"
 
 bindSelectableEventListener :: Element -> [Element] -> Fay ()
 bindSelectableEventListener e es = do
-    addEventListener "click" (\ev -> do
+    onClick e $ \ev -> do
         forM_ es $ \e' -> removeClass e' "selected"
         addClass e "selected"
-        return True) e
+        return True
 
 -- Modifying DOM elements
 

@@ -21,6 +21,10 @@ ul {
 }
 #editor {
     background-color: #EEE;
+    display: block;
+    margin: 50px auto 0;
+    height: 300px;
+    width: 600px;
 }
 #inventory {
   margin-right: 50px;
@@ -34,8 +38,16 @@ ul {
 #inventory .slot:hover {
   
 }
+#popover {
+  display: none;
+  position: absolute;
+  width: 100%;
+}
 .itemTypes, .materials {
   display: inline-block;
+}
+.materials {
+    margin-left: 13px;
 }
 .itemType, .material {
   background-color: #EEE;

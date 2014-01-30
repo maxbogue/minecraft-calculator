@@ -15,41 +15,48 @@ import Anvil.Data
 import Anvil.Show
 import Anvil.UI.Base
 
-{-showEditor :: Element -> Fay ()-}
-{-showEditor slot = do-}
-    {-editor <- getElementById("editor")-}
-    {-ffi "%1.style.display = 'block'" editor-}
-    {-ffi "%1.slot = %2" editor slot-}
+showEditorForSlot :: Element -> Fay ()
+showEditorForSlot slot = do
+    popover <- getElementById("popover")
+    editor <- getElementById("editor")
+    showBlock popover
+    setAnvilValue editor slot
 
-{-hideEditor :: Fay ()-}
-{-hideEditor = do-}
-    {-editor <- getElementById("editor")-}
-    {-ffi "%1.style.display = 'none'" editor-}
-    {-ffi "%1.slot = undefined" editor-}
+hideEditor :: Fay ()
+hideEditor = do
+    popover <- getElementById("popover")
+    editor <- getElementById("editor")
+    hideElement popover
+    setAnvilValue editor Undefined
 
 initEditor :: Fay ()
 initEditor = do
     editor <- getElementById "editor"
+    anvil <- getElementById "anvil"
+    popover <- getElementById "popover"
+    onClick anvil $ eventWrapper $ showEditorForSlot anvil
+    onClick editor $ \ev -> stopProp ev >> return True
+    onClick popover $ eventWrapper $ hideEditor
     initMaterialElements
     initItemTypeElements
     showBlock editor
 
 initItemTypeElements :: Fay ()
 initItemTypeElements = do
-    elements <- querySelectorAll "#editor .itemType"
+    elements <- getElementsByClass "itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
         selected <- hasClass element "selected"
         when selected $ filterMaterials itemType
         setAnvilValue element itemType
         setText element (showShortItemType itemType)
         bindSelectableEventListener element elements
-        addEventListener "click" itemTypeClicked element
+        onClick element itemTypeClicked
   where
     itemTypes = [Sword, Pickaxe, Shovel, Axe, Bow, Helmet, Chestplate, Leggings, Boots, FishingRod]
 
 initMaterialElements :: Fay ()
 initMaterialElements = do
-    elements <- querySelectorAll "#editor .material"
+    elements <- getElementsByClass "material"
     forM_ (zip elements materials) $ \(element, material) -> do
         setAnvilValue element material
         setText element (showShortMaterial material)
@@ -73,8 +80,7 @@ itemTypeClicked ev = do
 filterMaterials :: ItemType -> Fay ()
 filterMaterials itemType = do
     let vMats = validMaterials itemType
-    matElements <- querySelectorAll "#editor .material"
+    matElements <- getElementsByClass "material"
     forM_ matElements $ \matElem -> do
         mat <- getAnvilValue matElem
         if mat `elem` vMats then showBlock matElem else hideElement matElem
-
