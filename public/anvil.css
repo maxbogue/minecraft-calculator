@@ -1,11 +1,11 @@
 body {
   font-family: Arial;
 }
-div, span, ul, li {
+div, input, li, span, ul {
   margin: 0;
   padding: 0;
 }
-ul {
+li, ul {
   list-style: none;
 }
 
@@ -19,13 +19,6 @@ ul {
   float: right;
   margin: 50px;
 }
-#editor {
-    background-color: #EEE;
-    display: block;
-    margin: 50px auto 0;
-    height: 300px;
-    width: 600px;
-}
 #inventory {
   margin-right: 50px;
   width: 200px;
@@ -38,33 +31,66 @@ ul {
 #inventory .slot:hover {
   
 }
+
+/* Editor Styles */
+
 #popover {
   display: none;
   position: absolute;
   width: 100%;
 }
-.itemTypes, .materials {
+#editor {
+  background-color: #EEF;
+  border: 4px solid #000;
+  display: block;
+  font-size: 12px;
+  margin: 50px auto 0;
+  padding: 20px;
+  position: relative;
+  width: 600px;
+}
+.itemTypes, .materials, .name-and-enchants {
   display: inline-block;
 }
-.materials {
-    margin-left: 13px;
+.materials, .name-and-enchants {
+  margin-left: 13px;
+}
+.name-and-enchants {
+  position: absolute;
+  top: 20px;
 }
 .itemType, .material {
-  background-color: #EEE;
+  background-color: #FFF;
   border: 1px solid #000;
   color: #333;
-  font-size: 8px;
-  height: 8px;
+  display: block;
+  font-size: 10px;
+  height: 10px;
   line-height: 1;
   margin: 0 2px 2px 0;
-  overflow: hidden;
-  padding: 11px 0;
+  padding: 15px 0;
   text-align: center;
-  width: 30px;
+  width: 40px;
 }
-.itemType.selected {
-  border-color: green;
+.itemType:last-child, .material:last-child {
+  margin-bottom: 0;
 }
-.material.selected {
-  background-color: purple;
+.selected {
+  background-color: #E8E;
+}
+#name {
+  border: 1px solid #000;
+  padding: 5px;
+}
+.level {
+  border: 1px solid #CCD;
+  height: 16px;
+  width: 16px;
+}
+#enchants {
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+#enchants td:first-child {
+  padding-right: 5px;
 }

@@ -75,7 +75,10 @@ multipleEnchantPenalty _ = error "You can't have more than 5 enchantments."
 
 -- (maxLevel, costPerLevel, primaryItems, secondaryItems, exclusivityTag)
 enchantmentData :: Enchantment -> (Int, Int, [ItemType], [ItemType], Maybe String)
-enchantmentData enchantment = case enchantmentT enchantment of
+enchantmentData = enchantmentTData . enchantmentT
+
+enchantmentTData :: EnchantmentT -> (Int, Int, [ItemType], [ItemType], Maybe String)
+enchantmentTData enchantmentT = case enchantmentT of
     Protection -> (4, 1, armor, [], Just "protection")
     FireProtection -> (4, 2, armor, [], Just "protection")
     FeatherFalling -> (4, 2, [Boots], [], Nothing)
@@ -108,6 +111,10 @@ maxLevel :: Enchantment -> Int
 maxLevel enchantment = maxLevel' $ enchantmentData enchantment where
     maxLevel' (x, _, _, _, _) = x
 
+maxLevelT :: EnchantmentT -> Int
+maxLevelT eT = maxLevel' $ enchantmentTData eT where
+    maxLevel' (x, _, _, _, _) = x
+
 costPerLevel :: Enchantment -> Int
 costPerLevel enchantment = costPerLevel' $ enchantmentData enchantment where
     costPerLevel' (_, x, _, _, _) = x
@@ -123,6 +130,10 @@ secondaryItems enchantment = secondaryItems' $ enchantmentData enchantment where
 exclusivityTag :: Enchantment -> Maybe String
 exclusivityTag enchantment = exclusivityTag' $ enchantmentData enchantment where
     exclusivityTag' (_, _, _, _, x) = x
+
+validItemTypes :: EnchantmentT -> [ItemType]
+validItemTypes eT = case enchantmentTData eT of
+    (_, _, pis, sis, _) -> pis ++ sis
 
 maxDurability :: Item -> Int
 maxDurability item = maxDurability' (material item) (itemType item)

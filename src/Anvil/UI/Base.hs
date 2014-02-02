@@ -16,6 +16,9 @@ querySelector = ffi "document.querySelector(%1)"
 querySelectorAll :: String -> Fay [Element]
 querySelectorAll = ffi "document.querySelectorAll(%1)"
 
+firstChild :: Element -> Fay Element
+firstChild = ffi "%1.firstChild"
+
 -- Events
 
 addEventListener :: String -> Element -> (Event -> Fay Bool) -> Fay ()
@@ -36,7 +39,7 @@ getEventElement = ffi "%1.target"
 bindSelectableEventListener :: Element -> [Element] -> Fay ()
 bindSelectableEventListener e es = do
     onClick e $ \ev -> do
-        forM_ es $ \e' -> removeClass e' "selected"
+        forM_ es (flip removeClass "selected")
         addClass e "selected"
         return True
 
@@ -59,3 +62,6 @@ hideElement = ffi "%1.style.display = 'none'"
 
 showBlock :: Element -> Fay ()
 showBlock = ffi "%1.style.display = 'block'"
+
+showTableRow :: Element -> Fay ()
+showTableRow = ffi "%1.style.display = 'table-row'"

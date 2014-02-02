@@ -37,16 +37,16 @@ initEditor = do
     onClick anvil $ eventWrapper $ showEditorForSlot anvil
     onClick editor $ \ev -> stopProp ev >> return True
     onClick popover $ eventWrapper $ hideEditor
+    initEnchantElements
     initMaterialElements
     initItemTypeElements
-    showBlock editor
 
 initItemTypeElements :: Fay ()
 initItemTypeElements = do
     elements <- getElementsByClass "itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
         selected <- hasClass element "selected"
-        when selected $ filterMaterials itemType
+        when selected $ filterMaterials itemType >> filterEnchants itemType
         setAnvilValue element itemType
         setText element (showShortItemType itemType)
         bindSelectableEventListener element elements
@@ -64,6 +64,37 @@ initMaterialElements = do
   where
     materials = [Diamond, Iron, Gold, Chain, Leather, Stone, Wood]
 
+initEnchantElements :: Fay ()
+initEnchantElements = do
+    elements <- getElementsByClass "enchant"
+    forM_ (zip elements enchantmentTs) $ \(element, enchantmentT) -> do
+        nodes <- children element
+        case nodeListToArray nodes of
+            (name : levels) -> do
+                setAnvilValue element enchantmentT
+                setText name $ showEnchantmentT enchantmentT
+                forM_ (zip levels [1..5]) $ \(level, i) -> do
+                    setAnvilValue level i
+                    onClick level (levelClicked levels)
+            [] -> return ()
+  where
+    enchantmentTs :: [EnchantmentT]
+    enchantmentTs = [
+        Protection, FireProtection, FeatherFalling, BlastProtection,
+        ProjectileProtection, Respiration, AquaAffinity, Thorns,
+        Sharpness, Smite, BaneOfArthropods, Knockback, FireAspect, Looting,
+        Efficiency, SilkTouch, Unbreaking, Fortune,
+        Power, Punch, Flame, Infinity, LuckOfTheSea, Lure]
+    levelClicked :: [Element] -> Event -> Fay Bool
+    levelClicked levels ev = do
+        level <- getEventElement ev
+        selected <- hasClass level "selected"
+        if selected then removeClass level "selected"
+        else do
+            forM_ levels (flip removeClass "selected")
+            addClass level "selected"
+        return True
+
 editorItem :: Fay Item
 editorItem = do
     itemType <- querySelector ".itemType.selected" >>= getAnvilValue
@@ -74,7 +105,9 @@ editorItem = do
 
 itemTypeClicked :: Event -> Fay Bool
 itemTypeClicked ev = do
-    getEventElement ev >>= getAnvilValue >>= filterMaterials
+    iT <- getEventElement ev >>= getAnvilValue 
+    filterMaterials iT
+    filterEnchants iT
     return True
 
 filterMaterials :: ItemType -> Fay ()
@@ -84,3 +117,14 @@ filterMaterials itemType = do
     forM_ matElements $ \matElem -> do
         mat <- getAnvilValue matElem
         if mat `elem` vMats then showBlock matElem else hideElement matElem
+
+filterEnchants :: ItemType -> Fay ()
+filterEnchants iT = do
+    enchantElements <- getElementsByClass "enchant"
+    forM_ enchantElements $ \enchantElement -> do
+        eT <- getAnvilValue enchantElement
+        if iT `elem` validItemTypes eT
+          then showTableRow enchantElement
+          else do
+            hideElement enchantElement
+            removeClass enchantElement "selected"
