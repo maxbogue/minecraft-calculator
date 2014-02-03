@@ -5,6 +5,13 @@ import Prelude
 import DOM
 import FFI
 
+forIfM :: [a] -> (a -> Fay Bool) -> (a -> Fay b) -> Fay [b]
+forIfM ls p m = foldr forIfM' (return []) ls where
+    forIfM' x ms = do
+        p' <- p x
+        ys <- ms
+        if p' then do { y <- m x; return (y:ys) } else return ys
+
 -- Getting DOM elements
 
 getElementsByClass :: String -> Fay [Element]

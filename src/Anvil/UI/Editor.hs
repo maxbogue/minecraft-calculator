@@ -74,8 +74,10 @@ initEnchantElements = do
                 setAnvilValue element enchantmentT
                 setText name $ showEnchantmentT enchantmentT
                 forM_ (zip levels [1..5]) $ \(level, i) -> do
-                    setAnvilValue level i
-                    onClick level (levelClicked levels)
+                    if i <= maxLevelT enchantmentT then do
+                        setAnvilValue level i
+                        onClick level (levelClicked elements levels)
+                    else addClass level "disabled"
             [] -> return ()
   where
     enchantmentTs :: [EnchantmentT]
@@ -85,13 +87,33 @@ initEnchantElements = do
         Sharpness, Smite, BaneOfArthropods, Knockback, FireAspect, Looting,
         Efficiency, SilkTouch, Unbreaking, Fortune,
         Power, Punch, Flame, Infinity, LuckOfTheSea, Lure]
-    levelClicked :: [Element] -> Event -> Fay Bool
-    levelClicked levels ev = do
+    getExclusiveEnchantLevels :: [Element] -> [Element] -> EnchantmentT -> Fay [Element]
+    getExclusiveEnchantLevels enchantElements levels eT = do
+        case exclusivityTagT eT of
+            Just tag -> do
+                eTs <- mapM getAnvilValue enchantElements
+                levelss <- forIfM enchantElements (tagFromElementMatches tag) getLevels
+                return $ concat levelss
+            Nothing -> return levels
+    tagFromElementMatches :: String -> Element -> Fay Bool
+    tagFromElementMatches tag e = do
+        eT <- getAnvilValue e
+        case exclusivityTagT eT of
+            Just tag' -> return $ tag == tag'
+            Nothing -> return False
+    getLevels :: Element -> Fay [Element]
+    getLevels enchantElement = do
+        nodeList <- children enchantElement
+        return $ tail $ nodeListToArray nodeList
+    levelClicked :: [Element] -> [Element] -> Event -> Fay Bool
+    levelClicked enchantElements levels ev = do
         level <- getEventElement ev
         selected <- hasClass level "selected"
         if selected then removeClass level "selected"
         else do
-            forM_ levels (flip removeClass "selected")
+            eT <- parentNode level >>= getAnvilValue
+            levels' <- getExclusiveEnchantLevels enchantElements levels eT 
+            forM_ levels' (flip removeClass "selected")
             addClass level "selected"
         return True
 

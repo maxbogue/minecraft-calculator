@@ -131,6 +131,10 @@ exclusivityTag :: Enchantment -> Maybe String
 exclusivityTag enchantment = exclusivityTag' $ enchantmentData enchantment where
     exclusivityTag' (_, _, _, _, x) = x
 
+exclusivityTagT :: EnchantmentT -> Maybe String
+exclusivityTagT enchantment = exclusivityTag' $ enchantmentTData enchantment where
+    exclusivityTag' (_, _, _, _, x) = x
+
 validItemTypes :: EnchantmentT -> [ItemType]
 validItemTypes eT = case enchantmentTData eT of
     (_, _, pis, sis, _) -> pis ++ sis
