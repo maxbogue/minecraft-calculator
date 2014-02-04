@@ -92,19 +92,18 @@ initEnchantElements = do
         case exclusivityTagT eT of
             Just tag -> do
                 eTs <- mapM getAnvilValue enchantElements
-                levelss <- forIfM enchantElements (tagFromElementMatches tag) getLevels
+                levelss <- forMaybeM enchantElements (getLevelsIfConflicting tag)
                 return $ concat levelss
             Nothing -> return levels
-    tagFromElementMatches :: String -> Element -> Fay Bool
-    tagFromElementMatches tag e = do
+    getLevelsIfConflicting :: String -> Element -> Fay (Maybe [Element])
+    getLevelsIfConflicting tag e = do
         eT <- getAnvilValue e
         case exclusivityTagT eT of
-            Just tag' -> return $ tag == tag'
-            Nothing -> return False
-    getLevels :: Element -> Fay [Element]
-    getLevels enchantElement = do
-        nodeList <- children enchantElement
-        return $ tail $ nodeListToArray nodeList
+            Just tag' -> do
+                if tag == tag'
+                    then return . Just . tail . nodeListToArray =<< children e
+                    else return Nothing
+            Nothing -> return Nothing
     levelClicked :: [Element] -> [Element] -> Event -> Fay Bool
     levelClicked enchantElements levels ev = do
         level <- getEventElement ev
@@ -136,9 +135,13 @@ filterMaterials :: ItemType -> Fay ()
 filterMaterials itemType = do
     let vMats = validMaterials itemType
     matElements <- getElementsByClass "material"
-    forM_ matElements $ \matElem -> do
+    shown <- forMaybeM matElements $ \matElem -> do
+        removeClass matElem "selected"
         mat <- getAnvilValue matElem
-        if mat `elem` vMats then showBlock matElem else hideElement matElem
+        if mat `elem` vMats
+            then showBlock matElem >> return (Just matElem)
+            else hideElement matElem >> return Nothing
+    addClass (head shown) "selected"
 
 filterEnchants :: ItemType -> Fay ()
 filterEnchants iT = do

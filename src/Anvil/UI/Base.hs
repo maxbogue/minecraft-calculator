@@ -5,12 +5,14 @@ import Prelude
 import DOM
 import FFI
 
-forIfM :: [a] -> (a -> Fay Bool) -> (a -> Fay b) -> Fay [b]
-forIfM ls p m = foldr forIfM' (return []) ls where
-    forIfM' x ms = do
-        p' <- p x
+forMaybeM :: [a] -> (a -> Fay (Maybe b)) -> Fay [b]
+forMaybeM ls m = foldr forMaybeM' (return []) ls where
+    forMaybeM' x ms = do
+        y' <- m x
         ys <- ms
-        if p' then do { y <- m x; return (y:ys) } else return ys
+        case y' of
+            Just y -> return (y:ys)
+            Nothing -> return ys
 
 -- Getting DOM elements
 
