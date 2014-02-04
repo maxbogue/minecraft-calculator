@@ -45,9 +45,16 @@ editorItem :: Fay Item
 editorItem = do
     itemType <- querySelector ".itemType.selected" >>= getAnvilValue
     material <- querySelector ".material.selected" >>= getAnvilValue
-    name <- querySelector "#name" >>= getStringValue
+    name <- getElementById "name" >>= getStringValue
     let nnj = if name == "" then Right 0 else Left name
-    return $ makeItem itemType material [] nnj
+    enchants <- querySelectorAll ".enchant.selected" >>= mapM extractEnchant
+    return $ makeItem itemType material enchants nnj
+  where
+    extractEnchant :: Element -> Fay Enchantment
+    extractEnchant e = do
+        level <- getAnvilValue e
+        eT <- parentNode e >>= getAnvilValue
+        return $ Enchantment eT level
 
 -- ItemType selection logic.
 
