@@ -15,6 +15,22 @@ import Anvil.Data
 import Anvil.Show
 import Anvil.UI.Base
 
+select :: Element -> Fay ()
+select = flip addClass "selected"
+
+deselect :: Element -> Fay ()
+deselect = flip removeClass "selected"
+
+isSelected :: Element -> Fay Bool
+isSelected = flip hasClass "selected"
+
+bindSelectableEventListener :: Element -> [Element] -> Fay ()
+bindSelectableEventListener e es = do
+    onClick e $ \ev -> do
+        forM_ es (flip removeClass "selected")
+        addClass e "selected"
+        return True
+
 showEditorForSlot :: Element -> Fay ()
 showEditorForSlot slot = do
     popover <- getElementById("popover")
@@ -62,7 +78,7 @@ initItemTypeElements :: Fay ()
 initItemTypeElements = do
     elements <- getElementsByClass "itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
-        selected <- hasClass element "selected"
+        selected <- isSelected element
         when selected $ filterMaterials itemType >> filterEnchants itemType
         setAnvilValue element itemType
         setText element (showShortItemType itemType)
@@ -99,11 +115,11 @@ filterMaterials itemType = do
         if mat `elem` vMats
             then showBlock matElem >> return (Just matElem)
             else hideElement matElem >> return Nothing
-    selectedInShown <- forM shown (flip hasClass "selected")
+    selectedInShown <- forM shown isSelected
     when (not $ any id selectedInShown) $ do
         selected <- querySelectorAll ".material.selected"
-        mapM_ (flip removeClass "selected") selected
-        addClass (head shown) "selected"
+        mapM_ deselect selected
+        select $ head shown
 
 -- Enchantment selection logic.
 
@@ -134,13 +150,13 @@ initEnchantElements = do
 levelClicked :: [Element] -> [Element] -> Event -> Fay Bool
 levelClicked enchantElements levels ev = do
     level <- getEventElement ev
-    selected <- hasClass level "selected"
-    if selected then removeClass level "selected"
+    selected <- isSelected level
+    if selected then deselect level
     else do
         eT <- parentNode level >>= getAnvilValue
         levels' <- getExclusiveEnchantLevels enchantElements levels eT 
-        forM_ levels' (flip removeClass "selected")
-        addClass level "selected"
+        forM_ levels' deselect
+        select level
     return True
   where
     getExclusiveEnchantLevels :: [Element] -> [Element] -> EnchantmentT -> Fay [Element]
@@ -170,4 +186,4 @@ filterEnchants iT = do
           then showTableRow enchantElement
           else do
             hideElement enchantElement
-            removeClass enchantElement "selected"
+            deselect enchantElement

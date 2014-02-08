@@ -45,13 +45,6 @@ getEventMouseButton = ffi "%1.button"
 getEventElement :: Event -> Fay Element
 getEventElement = ffi "%1.target"
 
-bindSelectableEventListener :: Element -> [Element] -> Fay ()
-bindSelectableEventListener e es = do
-    onClick e $ \ev -> do
-        forM_ es (flip removeClass "selected")
-        addClass e "selected"
-        return True
-
 -- Modifying DOM elements
 
 setText :: Element -> String -> Fay ()
