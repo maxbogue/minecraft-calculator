@@ -56,14 +56,24 @@ initEditor = do
     initEnchantElements
     initMaterialElements
     initItemTypeElements
+    updateEditorTarget
+
+editorItemType :: Fay ItemType
+editorItemType = querySelector ".itemType.selected" >>= getAnvilValue
+
+editorMaterial :: Fay Material
+editorMaterial = querySelector ".material.selected" >>= getAnvilValue
+
+editorName :: Fay String
+editorName = getElementById "name" >>= getStringValue
 
 editorItem :: Fay Item
 editorItem = do
-    itemType <- querySelector ".itemType.selected" >>= getAnvilValue
-    material <- querySelector ".material.selected" >>= getAnvilValue
-    name <- getElementById "name" >>= getStringValue
+    itemType <- editorItemType
+    material <- editorMaterial
+    name <- editorName
     let nnj = if name == "" then Right 0 else Left name
-    enchants <- querySelectorAll ".enchant.selected" >>= mapM extractEnchant
+    enchants <- querySelectorAll ".level.selected" >>= mapM extractEnchant
     return $ makeItem itemType material enchants nnj
   where
     extractEnchant :: Element -> Fay Enchantment
@@ -72,16 +82,35 @@ editorItem = do
         eT <- parentNode e >>= getAnvilValue
         return $ Enchantment eT level
 
+updateEditorTarget :: Fay ()
+updateEditorTarget = do
+    item <- editorItem
+    putStrLn $ showItem item
+    let hurtItem = item {durability = 1, nameOrNumJobs = Left "test"}
+    let plainItem = makePlain item
+    let unitCost = if isUnitRepairable item
+        then getCost (fst (unitRepair hurtItem 1))
+        else 99
+    let plainCost1 = getCost $ fst $ combineItems hurtItem plainItem
+    let plainCost2 = getCost $ fst $ combineItems plainItem hurtItem
+    let plainCost = min plainCost1 plainCost2
+    editor <- getElementById "editor"
+    setBackgroundColor editor $ if plainCost < 40 then "#DF9"
+        else if unitCost < 40 then "#9DF" else "#F88"
+    let s = show unitCost ++ "/" ++ show plainCost1 ++ "/" ++ show plainCost2
+    numbers <- getElementById "numbers"
+    setText numbers s
+
 -- ItemType selection logic.
 
 initItemTypeElements :: Fay ()
 initItemTypeElements = do
     elements <- getElementsByClass "itemType"
     forM_ (zip elements itemTypes) $ \(element, itemType) -> do
-        selected <- isSelected element
-        when selected $ filterMaterials itemType >> filterEnchants itemType
         setAnvilValue element itemType
         setText element (showShortItemType itemType)
+        selected <- isSelected element
+        when selected $ filterMaterials itemType >> filterEnchants itemType
         bindSelectableEventListener element elements
         onClick element itemTypeClicked
   where
@@ -92,6 +121,7 @@ itemTypeClicked ev = do
     iT <- getEventElement ev >>= getAnvilValue 
     filterMaterials iT
     filterEnchants iT
+    updateEditorTarget
     return True
 
 -- Material selection logic.
@@ -103,6 +133,10 @@ initMaterialElements = do
         setAnvilValue element material
         setText element (showShortMaterial material)
         bindSelectableEventListener element elements
+        onClick element $ \_ -> do
+            updateMaxDurability
+            updateEditorTarget
+            return True
   where
     materials = [Diamond, Iron, Gold, Chain, Leather, Stone, Wood]
 
@@ -120,6 +154,7 @@ filterMaterials itemType = do
         selected <- querySelectorAll ".material.selected"
         mapM_ deselect selected
         select $ head shown
+    updateMaxDurability
 
 -- Enchantment selection logic.
 
@@ -157,6 +192,7 @@ levelClicked enchantElements levels ev = do
         levels' <- getExclusiveEnchantLevels enchantElements levels eT 
         forM_ levels' deselect
         select level
+    updateEditorTarget
     return True
   where
     getExclusiveEnchantLevels :: [Element] -> [Element] -> EnchantmentT -> Fay [Element]
@@ -186,4 +222,14 @@ filterEnchants iT = do
           then showTableRow enchantElement
           else do
             hideElement enchantElement
-            deselect enchantElement
+            levels <- children enchantElement
+            mapM_ deselect $ nodeListToArray levels
+
+-- Other
+
+updateMaxDurability :: Fay ()
+updateMaxDurability = do
+    iT <- editorItemType
+    mat <- editorMaterial
+    maxDurElem <- getElementById "maxDurability"
+    setText maxDurElem $ show $ maxDurability' mat iT

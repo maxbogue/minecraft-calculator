@@ -108,6 +108,15 @@ unitRepair i@(Item _ mat dur es _) n' = (
             | toMax < 300 = 2
             | otherwise = 3
 
+isRepairable :: Item -> Bool
+isRepairable item = let (ac, i) = unitRepair item 1 in getCost ac < 40
+
+makePlain :: Item -> Item
+makePlain (Item {itemType = iT, material = mat}) = makePlain' iT mat
+
+makePlain' :: ItemType -> Material -> Item
+makePlain' iT mat = makeItem iT mat [] (Right 0)
+
 pixie = makeItem Pickaxe Diamond [Enchantment Fortune 2, Enchantment Efficiency 3, Enchantment Unbreaking 3] (Left "Pixie")
 pointy = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Knockback 2, Enchantment Looting 3] (Left "Pointy")
 i1 = makeItem Sword Diamond [Enchantment Sharpness 3, Enchantment Looting 3] (Right 2)

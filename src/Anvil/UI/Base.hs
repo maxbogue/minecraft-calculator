@@ -67,3 +67,6 @@ showBlock = ffi "%1.style.display = 'block'"
 
 showTableRow :: Element -> Fay ()
 showTableRow = ffi "%1.style.display = 'table-row'"
+
+setBackgroundColor :: Element -> String -> Fay ()
+setBackgroundColor = ffi "%1.style.backgroundColor = %2"

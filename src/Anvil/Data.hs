@@ -66,6 +66,7 @@ enchantmentCategory Bow = BowE
 enchantmentCategory FishingRod = FishingRodE
 
 multipleEnchantPenalty :: Int -> Int
+multipleEnchantPenalty 0 = 0
 multipleEnchantPenalty 1 = 1
 multipleEnchantPenalty 2 = 3
 multipleEnchantPenalty 3 = 6
@@ -142,6 +143,7 @@ validItemTypes eT = case enchantmentTData eT of
 maxDurability :: Item -> Int
 maxDurability item = maxDurability' (material item) (itemType item)
 
+maxDurability' :: Material -> ItemType -> Int
 maxDurability' material itemType
     | elem itemType [Sword, Pickaxe, Axe, Shovel] = case material of
         Wood -> 60
@@ -174,3 +176,6 @@ exclusive :: Enchantment -> Enchantment -> Bool
 exclusive e1 e2 = case (exclusivityTag e1, exclusivityTag e2) of
     (Just t1, Just t2) -> enchantmentT e1 /= enchantmentT e2
     _ -> False
+
+isUnitRepairable :: Item -> Bool
+isUnitRepairable item = not $ itemType item `elem` [Bow, FishingRod]
