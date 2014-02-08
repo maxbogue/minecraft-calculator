@@ -95,12 +95,15 @@ filterMaterials itemType = do
     let vMats = validMaterials itemType
     matElements <- getElementsByClass "material"
     shown <- forMaybeM matElements $ \matElem -> do
-        removeClass matElem "selected"
         mat <- getAnvilValue matElem
         if mat `elem` vMats
             then showBlock matElem >> return (Just matElem)
             else hideElement matElem >> return Nothing
-    addClass (head shown) "selected"
+    selectedInShown <- forM shown (flip hasClass "selected")
+    when (not $ any id selectedInShown) $ do
+        selected <- querySelectorAll ".material.selected"
+        mapM_ (flip removeClass "selected") selected
+        addClass (head shown) "selected"
 
 -- Enchantment selection logic.
 
