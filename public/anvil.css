@@ -1,7 +1,7 @@
 body {
   font-family: Arial;
 }
-body, div, input, li, span, ul {
+body, div, input, li, span, ul, td, th {
   margin: 0;
   padding: 0;
 }
@@ -53,7 +53,7 @@ li, ul {
     display: inline-block;
     vertical-align: top;
 }
-.materials, .name-and-enchants {
+.materials, #right-section {
   margin-left: 13px;
 }
 .itemType, .material {
@@ -75,9 +75,25 @@ li, ul {
 .selected {
   background-color: #E8E;
 }
-#name {
+#name-and-durability  > * {
+  vertical-align: middle;
+}
+input {
   border: 1px solid #000;
+  font-family: Arial;
+  font-size: 12px;
   padding: 5px;
+  text-align: center;
+}
+#name-and-durability {
+  font-size: 16px;
+}
+#name {
+  width: 120px;
+}
+#durability {
+  margin-left: 10px;
+  width: 60px;
 }
 #enchants {
   background-color: #FFF;
@@ -86,15 +102,19 @@ li, ul {
   padding: 10px 11px 11px 10px;
 }
 #enchants > table {
+  table-layout: fixed;
   border-collapse: collapse;
 }
 #enchants td:first-child {
   padding-right: 5px;
 }
+#enchants td, #enchants th {
+  height: 19px;
+  vertical-align: middle;
+}
 .level {
   border: 1px solid #CCD;
-  height: 16px;
-  width: 16px;
+  width: 19px;
 }
 .level.disabled {
   background-color: #CCD;
