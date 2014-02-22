@@ -176,11 +176,11 @@ initEnchantElements = do
   where
     enchantmentTs :: [EnchantmentT]
     enchantmentTs = [
-        Protection, FireProtection, FeatherFalling, BlastProtection,
-        ProjectileProtection, Respiration, AquaAffinity, Thorns,
-        Sharpness, Smite, BaneOfArthropods, Knockback, FireAspect, Looting,
-        Efficiency, SilkTouch, Unbreaking, Fortune,
-        Power, Punch, Flame, Infinity, LuckOfTheSea, Lure]
+        Sharpness, Smite, BaneOfArthropods, Efficiency, Power,
+        Protection, FireProtection, BlastProtection, ProjectileProtection,
+        FeatherFalling, Unbreaking, Respiration, Thorns, AquaAffinity,
+        Fortune, SilkTouch, Looting, FireAspect, Knockback,
+        Punch, Flame, Infinity, LuckOfTheSea, Lure]
 
 levelClicked :: [Element] -> [Element] -> Event -> Fay Bool
 levelClicked enchantElements levels ev = do

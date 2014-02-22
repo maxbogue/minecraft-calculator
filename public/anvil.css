@@ -37,17 +37,18 @@ li, ul {
 #popover {
   /*display: none;*/
   position: absolute;
+  text-align: center;
   width: 100%;
 }
 #editor {
   background-color: #EEF;
   border: 4px solid #000;
-  display: block;
+  display: inline-block;
   font-size: 12px;
-  margin: 50px auto 0;
+  margin: 50px;
   padding: 20px;
   position: relative;
-  width: 600px;
+  text-align: left;
 }
 #editor > * {
     display: inline-block;
@@ -75,7 +76,7 @@ li, ul {
 .selected {
   background-color: #E8E;
 }
-#name-and-durability  > * {
+#name-and-durability > * {
   vertical-align: middle;
 }
 input {
@@ -86,20 +87,20 @@ input {
   text-align: center;
 }
 #name-and-durability {
-  font-size: 16px;
+  font-size: 14px;
 }
 #name {
   width: 120px;
 }
 #durability {
   margin-left: 10px;
-  width: 40px;
+  width: 32px;
 }
 #enchants {
   background-color: #FFF;
   border: 1px solid #000;
   margin-top: 10px;
-  padding: 10px 11px 11px 10px;
+  padding: 10px 11px 10px 10px;
 }
 #enchants > table {
   table-layout: fixed;
