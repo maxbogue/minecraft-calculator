@@ -62,7 +62,7 @@ li, ul {
   font-size: 10px;
   margin-bottom: 2px;
 }
-.slot .enchant {
+.slot .enchants li {
   display: inline-block;
 }
 .dur-bar {
