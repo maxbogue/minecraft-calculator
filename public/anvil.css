@@ -2,6 +2,7 @@ body {
   font-family: Arial;
 }
 body, div, input, li, span, ul, td, th {
+  line-height: 1;
   margin: 0;
   padding: 0;
 }
@@ -10,7 +11,7 @@ li, ul {
 }
 
 #center {
-  background-color: #DDF;
+  background-color: #EEE;
   margin: 20px auto;
   padding: 50px;
   width: 600px;
@@ -24,18 +25,61 @@ li, ul {
   width: 200px;
 }
 #inventory .slot {
-  background-color: #FDF;
+  background-color: #FFF;
+  border: 1px solid #000;
   display: block;
-  height: 4em;
+  height: 40px;
+  margin-top: 4px;
 }
 #inventory .slot:hover {
   
+}
+.slot .slot-icon {
+  /*float: left;*/
+  background-color: #FFF;
+  border-right: 1px solid #000;
+  color: #333;
+  display: inline-block;
+  font-size: 10px;
+  height: 10px;
+  padding: 15px 0;
+  text-align: center;
+  width: 40px;
+}
+.slot-contents {
+  display: inline-block;
+  margin: 0 4px;
+  width: 149px;
+}
+.slot > * {
+  vertical-align: top;
+}
+.slot .nnj {
+  font-size: 16px;
+  margin: 4px 0 2px;
+}
+.slot .enchants {
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+.slot .enchant {
+  display: inline-block;
+}
+.dur-bar {
+  background-color: #000;
+  height: 2px;
+  margin-bottom: 4px;
+}
+.dur-bar-progress {
+  background-color: #5F5;
+  height: 100%;
+  width: 60%;
 }
 
 /* Editor Styles */
 
 #popover {
-  /*display: none;*/
+  display: none;
   position: absolute;
   text-align: center;
   width: 100%;
