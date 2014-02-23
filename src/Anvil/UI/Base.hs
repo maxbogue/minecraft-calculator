@@ -14,6 +14,9 @@ forMaybeM ls m = foldr forMaybeM' (return []) ls where
             Just y -> return (y:ys)
             Nothing -> return ys
 
+replicateM_ :: Int -> Fay a -> Fay ()
+replicateM_ n x = sequence_ $ replicate n x
+
 -- Getting DOM elements
 
 getElementsByClass :: String -> Fay [Element]
@@ -27,6 +30,9 @@ querySelectorAll = ffi "document.querySelectorAll(%1)"
 
 firstChild :: Element -> Fay Element
 firstChild = ffi "%1.firstChild"
+
+copyElement :: Element -> Fay Element
+copyElement = ffi "%1.copyNode(true)"
 
 -- Events
 

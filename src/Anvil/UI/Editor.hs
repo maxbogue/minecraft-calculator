@@ -158,8 +158,26 @@ filterMaterials itemType = do
 
 -- Enchantment selection logic.
 
+-- Create a row of the enchantment table.
+makeEnchantElement = do
+    tr <- createElement "tr"
+    addClass tr "enchant"
+    -- The enchant name cell.
+    createElement "td" >>= appendChild tr
+    -- The level cells.
+    replicateM_ 5 $ makeCell >>= appendChild tr
+    return tr
+  where
+    makeCell = do
+        td <- createElement "td"
+        addClass td "level"
+        return td
+
 initEnchantElements :: Fay ()
 initEnchantElements = do
+    enchantsTable <- querySelector "#enchants tbody"
+    let numEnchantTs = length enchantmentTs
+    replicateM_ numEnchantTs $ makeEnchantElement >>= appendChild enchantsTable
     elements <- getElementsByClass "enchant"
     forM_ (zip elements enchantmentTs) $ \(element, enchantmentT) -> do
         nodes <- children element

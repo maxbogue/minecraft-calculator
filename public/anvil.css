@@ -150,6 +150,9 @@ input {
   table-layout: fixed;
   border-collapse: collapse;
 }
+#enchants th {
+  text-align: center;
+}
 #enchants td:first-child {
   padding-right: 5px;
 }
