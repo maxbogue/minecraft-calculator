@@ -62,9 +62,6 @@ getAnvilValue = ffi "%1.anvilValue"
 setAnvilValue :: Element -> a -> Fay ()
 setAnvilValue = ffi "%1.anvilValue = %2"
 
-getStringValue :: Element -> Fay String
-getStringValue = ffi "%1.value"
-
 hideElement :: Element -> Fay ()
 hideElement = ffi "%1.style.display = 'none'"
 

@@ -15,7 +15,7 @@ priorWorkPenalty i = case nameOrNumJobs i of
     Right numJobs -> 2 * numJobs
 
 makeItem :: ItemType -> Material -> [Enchantment] -> Either String Int -> Item
-makeItem it m es nnj = Item it m (maxDurability' m it) es nnj
+makeItem it m es nnj = Item it m (maxDurability m it) es nnj
 
 validEnchantment :: Item -> Enchantment -> Bool
 validEnchantment item e = itemTypeIsIn (primaryItems e) || itemTypeIsIn (secondaryItems e) where
@@ -36,12 +36,12 @@ durabilityCost target sacrifice
     | otherwise = CostLeaf "Durability cost" $ sacrificeCost sacrifice
   where
     atMaxDurability :: Item -> Bool
-    atMaxDurability i = durability i == maxDurability i
+    atMaxDurability i = durability i == maxDurabilityOfItem i
     sacrificeCost :: Item -> Int
     sacrificeCost item = 1 + (floor ((fromIntegral $ (durability item) - offset item) / 100.0))
       where
         offset :: Item -> Int
-        offset item = 100 - floor (0.12 * (fromIntegral $ maxDurability item))
+        offset item = 100 - floor (0.12 * (fromIntegral $ maxDurabilityOfItem item))
 
 updateEnchant :: [Enchantment] -> Enchantment -> [Enchantment]
 updateEnchant (e:es) e' = if enchantmentT e == enchantmentT e' then (e' : es) else (e : updateEnchant es e')
@@ -97,7 +97,7 @@ unitRepair i@(Item _ mat dur es _) n' = (
   where
     unitCost = if mat == Diamond then diamondRepair dur n' else unitRepair' dur n'
     finalDurability = min maxDur (dur + unitDur * n')
-    maxDur = maxDurability i
+    maxDur = maxDurabilityOfItem i
     unitDur = maxDur `div` 4
     unitRepair' d 0 = 0
     unitRepair' d n = 1 + length es + unitRepair' (d + unitDur) (n - 1)

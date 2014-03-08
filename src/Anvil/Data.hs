@@ -140,11 +140,11 @@ validItemTypes :: EnchantmentT -> [ItemType]
 validItemTypes eT = case enchantmentTData eT of
     (_, _, pis, sis, _) -> pis ++ sis
 
-maxDurability :: Item -> Int
-maxDurability item = maxDurability' (material item) (itemType item)
+maxDurabilityOfItem :: Item -> Int
+maxDurabilityOfItem item = maxDurability (material item) (itemType item)
 
-maxDurability' :: Material -> ItemType -> Int
-maxDurability' material itemType
+maxDurability :: Material -> ItemType -> Int
+maxDurability material itemType
     | elem itemType [Sword, Pickaxe, Axe, Shovel] = case material of
         Wood -> 60
         Stone -> 132

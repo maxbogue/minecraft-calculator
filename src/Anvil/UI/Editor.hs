@@ -65,7 +65,19 @@ editorMaterial :: Fay Material
 editorMaterial = querySelector ".material.selected" >>= getAnvilValue
 
 editorName :: Fay String
-editorName = getElementById "name" >>= getStringValue
+editorName = getElementById "name" >>= getValue
+
+editorDurability :: Material -> ItemType -> Fay Int
+editorDurability material itemType = do
+    let maxDur = maxDurability material itemType
+    e <- getElementById "durability"
+    s <- getValue e >>= return . filter isDigit
+    let s' = if null s then show maxDur else s
+    setValue e s'
+    dur <- parseInt s'
+    return $ max 1 $ min maxDur dur
+  where
+    isDigit = flip elem "0123456789"
 
 editorItem :: Fay Item
 editorItem = do
@@ -74,7 +86,8 @@ editorItem = do
     name <- editorName
     let nnj = if name == "" then Right 0 else Left name
     enchants <- querySelectorAll ".level.selected" >>= mapM extractEnchant
-    return $ makeItem itemType material enchants nnj
+    durability <- editorDurability material itemType
+    return $ Item itemType material durability enchants nnj
   where
     extractEnchant :: Element -> Fay Enchantment
     extractEnchant e = do
@@ -249,5 +262,7 @@ updateMaxDurability :: Fay ()
 updateMaxDurability = do
     iT <- editorItemType
     mat <- editorMaterial
+    let maxDur = maxDurability mat iT
     maxDurElem <- getElementById "maxDurability"
-    setText maxDurElem $ show $ maxDurability' mat iT
+    setText maxDurElem $ show $ maxDur
+    setAnvilValue maxDurElem maxDur

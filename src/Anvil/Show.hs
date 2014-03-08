@@ -62,7 +62,7 @@ showItem i@(Item iT mat dur es nnj) = "[" ++ matType ++ nnj' ++ dur' ++ es' ++ "
     nnj' = case nnj of
         Left name -> " \"" ++ name ++ "\""
         Right numJobs -> " (" ++ show numJobs ++ " jobs)"
-    dur' = " " ++ show dur ++ "/" ++ (show $ maxDurability i)
+    dur' = " " ++ show dur ++ "/" ++ (show $ maxDurabilityOfItem i)
     es' = (if null es then "" else " ") ++ join ", " (map showEnchantment es)
 
 showEnchantmentT e = case e of
