@@ -42,6 +42,9 @@ addEventListener = ffi "%2.addEventListener(%1,%3,false)"
 onClick :: Element -> (Event -> Fay Bool) -> Fay ()
 onClick = addEventListener "click"
 
+dispatchEvent :: Element -> Event -> Fay ()
+dispatchEvent = ffi "%1.dispatchEvent(%2)"
+
 eventWrapper :: Fay a -> Event -> Fay Bool
 eventWrapper f ev = f >> return True
 

@@ -31,23 +31,26 @@ bindSelectableEventListener e es = do
         addClass e "selected"
         return True
 
+getEditor :: Fay Element
+getEditor = getElementById "editor"
+
 showEditorForSlot :: Element -> Fay ()
 showEditorForSlot slot = do
-    popover <- getElementById("popover")
-    editor <- getElementById("editor")
+    popover <- getElementById "popover"
+    editor <- getEditor
     showBlock popover
     setAnvilValue editor slot
 
 hideEditor :: Fay ()
 hideEditor = do
-    popover <- getElementById("popover")
-    editor <- getElementById("editor")
+    popover <- getElementById "popover"
+    editor <- getEditor
     hideElement popover
     setAnvilValue editor Undefined
 
 initEditor :: Fay ()
 initEditor = do
-    editor <- getElementById "editor"
+    editor <- getEditor
     anvil <- getElementById "anvil"
     popover <- getElementById "popover"
     onClick anvil $ eventWrapper $ showEditorForSlot anvil
@@ -56,7 +59,34 @@ initEditor = do
     initEnchantElements
     initMaterialElements
     initItemTypeElements
-    updateEditorTarget
+    addItemUpdateListener updateItemCosts
+    dispatchEditorUpdate
+
+-- Editor events
+
+getUpdatedItem :: Event -> Fay Item
+getUpdatedItem = ffi "%1.updatedItem"
+
+addItemUpdateListener :: (Item -> Fay ()) -> Fay ()
+addItemUpdateListener listener = do
+    editor <- getEditor
+    addEventListener "item-update" editor $ \ev -> do
+        item <- getUpdatedItem ev
+        listener item
+        return True
+
+dispatchEditorUpdate :: Fay ()
+dispatchEditorUpdate = do
+    editor <- getEditor
+    item <- editorItem
+    event <- createEditorEvent
+    setUpdatedItem event item
+    dispatchEvent editor event
+  where
+    createEditorEvent :: Fay Event
+    createEditorEvent = ffi "new Event('item-update')"
+    setUpdatedItem :: Event -> Item -> Fay ()
+    setUpdatedItem = ffi "%1.updatedItem = %2"
 
 editorItemType :: Fay ItemType
 editorItemType = querySelector ".itemType.selected" >>= getAnvilValue
@@ -95,10 +125,8 @@ editorItem = do
         eT <- parentNode e >>= getAnvilValue
         return $ Enchantment eT level
 
-updateEditorTarget :: Fay ()
-updateEditorTarget = do
-    item <- editorItem
-    putStrLn $ showItem item
+updateItemCosts :: Item -> Fay ()
+updateItemCosts item = do
     let hurtItem = item {durability = 1, nameOrNumJobs = Left "test"}
     let plainItem = makePlain item
     let unitCost = if isUnitRepairable item
@@ -107,7 +135,7 @@ updateEditorTarget = do
     let plainCost1 = getCost $ fst $ combineItems hurtItem plainItem
     let plainCost2 = getCost $ fst $ combineItems plainItem hurtItem
     let plainCost = min plainCost1 plainCost2
-    editor <- getElementById "editor"
+    editor <- getEditor
     setBackgroundColor editor $ if plainCost < 40 then "#DF9"
         else if unitCost < 40 then "#9DF" else "#F88"
     let s = show unitCost ++ "/" ++ show plainCost1 ++ "/" ++ show plainCost2
@@ -134,7 +162,7 @@ itemTypeClicked ev = do
     iT <- getEventElement ev >>= getAnvilValue 
     filterMaterials iT
     filterEnchants iT
-    updateEditorTarget
+    dispatchEditorUpdate
     return True
 
 -- Material selection logic.
@@ -148,7 +176,7 @@ initMaterialElements = do
         bindSelectableEventListener element elements
         onClick element $ \_ -> do
             updateMaxDurability
-            updateEditorTarget
+            dispatchEditorUpdate
             return True
   where
     materials = [Diamond, Iron, Gold, Chain, Leather, Stone, Wood]
@@ -223,7 +251,7 @@ levelClicked enchantElements levels ev = do
         levels' <- getExclusiveEnchantLevels enchantElements levels eT 
         forM_ levels' deselect
         select level
-    updateEditorTarget
+    dispatchEditorUpdate
     return True
   where
     getExclusiveEnchantLevels :: [Element] -> [Element] -> EnchantmentT -> Fay [Element]
